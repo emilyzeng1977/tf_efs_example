@@ -58,14 +58,13 @@ resource "aws_security_group" "ec2_sg" {
 
 # 创建一个 EC2 实例
 resource "aws_instance" "example" {
-  ami           = var.instance_ami  # 指定您的AMI
-  instance_type = var.instance_type
-  key_name      = aws_key_pair.example.key_name
-  subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.ec2_sg.name]
+  ami                  = var.instance_ami  # 指定您的AMI
+  instance_type        = var.instance_type
+  key_name             = aws_key_pair.example.key_name
+  subnet_id            = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]  # 使用安全组ID
 
   tags = {
     Name = "Terraform"
   }
 }
-
