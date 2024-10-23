@@ -31,7 +31,16 @@ resource "aws_instance" "example" {
   instance_type        = var.instance_type
   key_name             = aws_key_pair.example.key_name
   subnet_id            = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.ec2_sg.id]  # 使用安全组ID
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id, aws_security_group.efs_sg.id]  # 使用安全组ID
+
+  # 运行脚本以安装 NFS 客户端并挂载 EFS
+  user_data = <<-EOF
+              #!/bin/bash
+              yum install -y nfs-utils
+              mkdir /mnt/efs
+              mount -t nfs -o nfsvers=4.1 ${aws_efs_file_system.my_efs.dns_name}:/ /mnt/efs
+              echo "${aws_efs_file_system.my_efs.dns_name}:/ /mnt/efs nfs4 defaults,_netdev 0 0" >> /etc/fstab
+              EOF
 
   # 允许自动分配公共 IP
   associate_public_ip_address = true
