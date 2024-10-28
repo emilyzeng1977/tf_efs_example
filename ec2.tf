@@ -25,8 +25,9 @@ resource "null_resource" "set_permissions" {
   depends_on = [local_file.private_key]  # 确保在私钥文件创建后执行
 }
 
-# 创建一个 EC2 实例
+# 创建两个 EC2 实例
 resource "aws_instance" "example" {
+  count                = var.instance_count
   ami                  = var.instance_ami  # 指定您的AMI
   instance_type        = var.instance_type
   key_name             = aws_key_pair.example.key_name
@@ -34,19 +35,54 @@ resource "aws_instance" "example" {
 #   vpc_security_group_ids = [aws_security_group.ec2_sg.id, aws_security_group.efs_sg.id]  # 使用安全组ID
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 
+  # 显式依赖于 EFS 文件系统和挂载目标
+  depends_on = [
+    aws_efs_file_system.my_efs, aws_efs_mount_target.example
+  ]
+
   # 运行脚本以安装 NFS 客户端并挂载 EFS
-#   user_data = <<-EOF
-#               #!/bin/bash
-#               yum install -y nfs-utils
-#               mkdir /mnt/efs
-#               mount -t nfs -o nfsvers=4.1 ${aws_efs_file_system.my_efs.dns_name}:/ /mnt/efs
-#               echo "${aws_efs_file_system.my_efs.dns_name}:/ /mnt/efs nfs4 defaults,_netdev 0 0" >> /etc/fstab
-#               EOF
+   user_data = <<-EOF
+               #!/bin/bash
+              sudo yum install -y amazon-efs-utils
+              sudo mkdir /mnt/efs
+              sudo mount -t efs -o tls ${aws_efs_file_system.my_efs.id}:/ /mnt/efs
+              EOF
 
   # 允许自动分配公共 IP
   associate_public_ip_address = true
 
   tags = {
-    Name = "Terraform"
+    Name = "Terraform-${count.index + 1}"
   }
 }
+
+#创建第二个EC2实例
+# resource "aws_instance" "example2" {
+#   ami                  = var.instance_ami  # 指定您的AMI
+#   instance_type        = var.instance_type
+#   key_name             = aws_key_pair.example.key_name
+#   subnet_id            = aws_subnet.public_subnet.id
+#   #   vpc_security_group_ids = [aws_security_group.ec2_sg.id, aws_security_group.efs_sg.id]  # 使用安全组ID
+#   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+#
+#   # 显式依赖于 EFS 文件系统和挂载目标
+#   depends_on = [
+#     aws_efs_file_system.my_efs,
+#     aws_efs_mount_target.example
+#   ]
+#
+#   # 运行脚本以安装 NFS 客户端并挂载 EFS
+#   user_data = <<-EOF
+#                #!/bin/bash
+#               sudo yum install -y amazon-efs-utils
+#               sudo mkdir /mnt/efs
+#               sudo mount -t efs -o tls ${aws_efs_file_system.my_efs.id}:/ /mnt/efs
+#               EOF
+#
+#   # 允许自动分配公共 IP
+#   associate_public_ip_address = true
+#
+#   tags = {
+#     Name = "Terraform2"
+#   }
+# }

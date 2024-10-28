@@ -27,3 +27,15 @@ variable "instance_ami" {
   type        = string
   default     = "ami-0043df2e553ad12b6"
 }
+
+variable "instance_count" {
+  description = "number of EC2 instance "
+  type        = number
+  default     = 2
+}
+
+# 定义已有的 EFS ID
+# variable "efs_id" {
+#   type    = string
+#   default = "fs-0d1f617b3eb94a552"  # 替换为已有的 EFS 文件系统 ID
+# }

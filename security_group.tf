@@ -29,7 +29,8 @@ resource "aws_security_group" "efs_sg" {
     from_port   = 2049  # NFS 默认端口
     to_port     = 2049
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # 允许 VPC 内部访问 EFS
+    #cidr_blocks = ["10.0.0.0/16"] # 允许 VPC 内部访问 EFS
+    security_groups = [aws_security_group.ec2_sg.id]  # 允许来自 EC2 安全组的流量
   }
 
   egress {
